@@ -1,7 +1,5 @@
 ## 🍽️ MessNet: web Based Mess Management System for Hostel Administration
 
-🔗 **Live Website:** https://messnet.pythonanywhere.com/
-
 MessNet is a web-based, all-in-one mess automation platform built using Django.
 It modernizes hostel mess workflows by allowing students to manage their menu, leave requests, bills, feedback, and lost & found through an elegant, user-friendly interface.
 
@@ -192,9 +190,7 @@ The system also empowers administrators with full control over menu updates, lea
 
 8. **You're all set!** Open your browser and go to `http://localhost:3000/`.
 
-## 🌐 Live Demo  
-Click below to view the running project:  
-🔗 **https://messnet.pythonanywhere.com/**
+
 
 ## 🧑‍🏫 How to Use
 
