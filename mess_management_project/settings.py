@@ -13,6 +13,12 @@ DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '127.0.0.1,localhost,.onrender.com,.koyeb.app,.pythonanywhere.com,*').split(',')
 
+CSRF_TRUSTED_ORIGINS = os.environ.get(
+    'CSRF_TRUSTED_ORIGINS',
+    'https://*.onrender.com,https://*.koyeb.app,https://*.pythonanywhere.com,http://127.0.0.1,http://localhost'
+).split(',')
+
+
 
 # Application definition
 INSTALLED_APPS = [
