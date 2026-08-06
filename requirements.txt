@@ -4,3 +4,5 @@ twilio
 whitenoise
 psycopg2-binary
 python-decouple
+python-dotenv
+dj-database-url
