@@ -1,4 +1,6 @@
-## 🍽️ MessNet: web Based Mess Management System for Hostel Administration
+## 🍽️ MessNet: Web-Based Mess Management System for Hostel Administration
+
+🌐 **Live Demo:** [https://mess-management-system.onrender.com](https://messnet.onrender.com/)
 
 MessNet is a web-based, all-in-one mess automation platform built using Django.
 It modernizes hostel mess workflows by allowing students to manage their menu, leave requests, bills, feedback, and lost & found through an elegant, user-friendly interface.
@@ -139,8 +141,8 @@ The system also empowers administrators with full control over menu updates, lea
 **🔧 Installation (Django Backend)**
 1. **Clone the Repository:**
       ```
-      git clone https://github.com/Sriram-Ravisankar/mess_management_system.git
-      cd mess_management_system
+      git clone https://github.com/Sriram-Ravisankar/Smart_Hostel_Mess_Management_System
+      cd Smart_Hostel_Mess_Management_System
       ```
       
 
@@ -158,12 +160,14 @@ The system also empowers administrators with full control over menu updates, lea
 3. **Create a `requirements.txt` file:**
     Create a file named `requirements.txt` in the root of your project and paste the following:
     ```
-    Django==3.2.25
-    gunicorn
-    twilio
-    whitenoise
-    psycopg2-binary
-    python-decouple
+   Django>=4.2.11,<5.0
+   gunicorn
+   twilio
+   whitenoise
+   psycopg2-binary
+   python-decouple
+   python-dotenv
+   dj-database-url
     ```
 
 4.  **Install the required packages:**
@@ -310,7 +314,7 @@ http://127.0.0.1:8000/admin/
 <div align="center">
 
 ### 🔗 **Live Website**
-https://messnet.pythonanywhere.com/
+https://messnet.onrender.com/
 
 ---
 
