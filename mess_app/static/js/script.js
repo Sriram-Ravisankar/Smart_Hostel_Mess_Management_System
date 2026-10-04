@@ -108,13 +108,14 @@ document.addEventListener('DOMContentLoaded', function() {
             
             renderIcons();
 
-        } catch (error) {
-            console.error('Polling failed:', error);
-        }
+            } catch (error) {
+                console.error('Polling failed:', error);
+            } finally {
+                setTimeout(updateDashboardData, 10000);
+            }
     };
 
-    // Start polling every 10 seconds (10000 ms)
-    setInterval(updateDashboardData, 10000);
+    // Start polling
     updateDashboardData();
 
 
