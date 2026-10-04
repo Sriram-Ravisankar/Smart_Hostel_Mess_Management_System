@@ -8,7 +8,6 @@ from django.http import JsonResponse
 from django.views.decorators.cache import never_cache 
 from datetime import date, datetime
 import calendar
-
 import time
 import logging
 
@@ -214,8 +213,6 @@ def student_dashboard(request):
 
 # --- JSON ENDPOINT FOR REAL-TIME POLLING ---
 # In your views.py, update the data_endpoint function:
-
-
 @login_required
 @user_passes_test(is_student)
 @never_cache
@@ -225,6 +222,7 @@ def data_endpoint(request):
 
     user = request.user
 
+    # 1. Latest Bill
     t = time.time()
     latest_bill = (
         Bill.objects
@@ -234,6 +232,7 @@ def data_endpoint(request):
     )
     logger.info("latest_bill: %.3fs", time.time() - t)
 
+    # 2. Pending Leave Requests
     t = time.time()
     pending_leaves_count = (
         LeaveRequest.objects
@@ -242,6 +241,7 @@ def data_endpoint(request):
     )
     logger.info("pending_leaves: %.3fs", time.time() - t)
 
+    # 3. Latest Leave Request
     t = time.time()
     latest_leave = (
         LeaveRequest.objects
@@ -251,6 +251,12 @@ def data_endpoint(request):
     )
     logger.info("latest_leave: %.3fs", time.time() - t)
 
+    # Get latest leave status
+    latest_leave_status_code = (
+        latest_leave.status if latest_leave else 'N'
+    )
+
+    # 4. Active Notifications
     t = time.time()
     notifications = (
         AdminNotification.objects
@@ -259,6 +265,7 @@ def data_endpoint(request):
     )
     logger.info("notifications: %.3fs", time.time() - t)
 
+    # Prepare bill data
     bill_data = {}
 
     if latest_bill:
@@ -273,6 +280,7 @@ def data_endpoint(request):
             'status_code': latest_bill.status,
         }
 
+    # Prepare notification data
     notifications_data = [
         {
             'message': notif.message,
@@ -281,7 +289,8 @@ def data_endpoint(request):
         for notif in notifications
     ]
 
-    return JsonResponse({
+    # Prepare JSON response
+    response = JsonResponse({
         'status': 'success',
         'dashboard': {
             'bill': bill_data,
@@ -291,6 +300,10 @@ def data_endpoint(request):
         }
     })
 
-    logger.info("TOTAL data_endpoint: %.3fs", time.time() - start)
+    # Log total endpoint execution time
+    logger.info(
+        "TOTAL data_endpoint: %.3fs",
+        time.time() - start
+    )
 
     return response
