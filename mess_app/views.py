@@ -9,6 +9,11 @@ from django.views.decorators.cache import never_cache
 from datetime import date, datetime
 import calendar
 
+import time
+import logging
+
+logger = logging.getLogger(__name__)
+
 from .models import (
     User, FoodMenu, LeaveRequest, Bill, Feedback, LostAndFound, AdminNotification, MealRating,
     WEEKDAYS 
@@ -209,41 +214,50 @@ def student_dashboard(request):
 
 # --- JSON ENDPOINT FOR REAL-TIME POLLING ---
 # In your views.py, update the data_endpoint function:
+
+
 @login_required
 @user_passes_test(is_student)
 @never_cache
 def data_endpoint(request):
+
+    start = time.time()
+
     user = request.user
 
+    t = time.time()
     latest_bill = (
         Bill.objects
         .filter(student=user)
         .order_by('-month')
         .first()
     )
+    logger.info("latest_bill: %.3fs", time.time() - t)
 
+    t = time.time()
     pending_leaves_count = (
         LeaveRequest.objects
         .filter(student=user, status='P')
         .count()
     )
+    logger.info("pending_leaves: %.3fs", time.time() - t)
 
+    t = time.time()
     latest_leave = (
         LeaveRequest.objects
         .filter(student=user)
         .order_by('-requested_on')
         .first()
     )
+    logger.info("latest_leave: %.3fs", time.time() - t)
 
-    latest_leave_status_code = (
-        latest_leave.status if latest_leave else 'N'
-    )
-
+    t = time.time()
     notifications = (
         AdminNotification.objects
         .filter(is_active=True)
         .order_by('-created_at')[:3]
     )
+    logger.info("notifications: %.3fs", time.time() - t)
 
     bill_data = {}
 
@@ -276,3 +290,7 @@ def data_endpoint(request):
             'notifications': notifications_data,
         }
     })
+
+    logger.info("TOTAL data_endpoint: %.3fs", time.time() - start)
+
+    return response
