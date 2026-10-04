@@ -9,9 +9,7 @@ from django.views.decorators.cache import never_cache
 from datetime import date, datetime
 import calendar
 import time
-import logging
 
-logger = logging.getLogger(__name__)
 
 from .models import (
     User, FoodMenu, LeaveRequest, Bill, Feedback, LostAndFound, AdminNotification, MealRating,
@@ -230,7 +228,7 @@ def data_endpoint(request):
         .order_by('-month')
         .first()
     )
-    logger.info("latest_bill: %.3fs", time.time() - t)
+    print(f"latest_bill: {time.time() - t:.3f}s")
 
     # 2. Pending Leave Requests
     t = time.time()
@@ -239,7 +237,7 @@ def data_endpoint(request):
         .filter(student=user, status='P')
         .count()
     )
-    logger.info("pending_leaves: %.3fs", time.time() - t)
+    print(f"pending_leaves: {time.time() - t:.3f}s")
 
     # 3. Latest Leave Request
     t = time.time()
@@ -249,7 +247,7 @@ def data_endpoint(request):
         .order_by('-requested_on')
         .first()
     )
-    logger.info("latest_leave: %.3fs", time.time() - t)
+    print(f"latest_leave: {time.time() - t:.3f}s")
 
     # Get latest leave status
     latest_leave_status_code = (
@@ -263,7 +261,7 @@ def data_endpoint(request):
         .filter(is_active=True)
         .order_by('-created_at')[:3]
     )
-    logger.info("notifications: %.3fs", time.time() - t)
+    print(f"notifications: {time.time() - t:.3f}s")
 
     # Prepare bill data
     bill_data = {}
@@ -300,10 +298,7 @@ def data_endpoint(request):
         }
     })
 
-    # Log total endpoint execution time
-    logger.info(
-        "TOTAL data_endpoint: %.3fs",
-        time.time() - start
-    )
+    # Total endpoint execution time
+    print(f"TOTAL data_endpoint: {time.time() - start:.3f}s")
 
     return response
