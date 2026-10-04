@@ -8,7 +8,7 @@ from django.http import JsonResponse
 from django.views.decorators.cache import never_cache 
 from datetime import date, datetime
 import calendar
-import time
+
 
 
 from .models import (
@@ -216,54 +216,44 @@ def student_dashboard(request):
 @never_cache
 def data_endpoint(request):
 
-    start = time.time()
-
     user = request.user
 
-    # 1. Latest Bill
-    t = time.time()
+    # Latest Bill
     latest_bill = (
         Bill.objects
         .filter(student=user)
         .order_by('-month')
         .first()
     )
-    print(f"latest_bill: {time.time() - t:.3f}s")
 
-    # 2. Pending Leave Requests
-    t = time.time()
+    # Pending Leave Requests
     pending_leaves_count = (
         LeaveRequest.objects
         .filter(student=user, status='P')
         .count()
     )
-    print(f"pending_leaves: {time.time() - t:.3f}s")
 
-    # 3. Latest Leave Request
-    t = time.time()
+    # Latest Leave Request
     latest_leave = (
         LeaveRequest.objects
         .filter(student=user)
         .order_by('-requested_on')
         .first()
     )
-    print(f"latest_leave: {time.time() - t:.3f}s")
 
-    # Get latest leave status
+    # Latest Leave Status
     latest_leave_status_code = (
         latest_leave.status if latest_leave else 'N'
     )
 
-    # 4. Active Notifications
-    t = time.time()
+    # Active Notifications
     notifications = (
         AdminNotification.objects
         .filter(is_active=True)
         .order_by('-created_at')[:3]
     )
-    print(f"notifications: {time.time() - t:.3f}s")
 
-    # Prepare bill data
+    # Prepare Bill Data
     bill_data = {}
 
     if latest_bill:
@@ -278,7 +268,7 @@ def data_endpoint(request):
             'status_code': latest_bill.status,
         }
 
-    # Prepare notification data
+    # Prepare Notification Data
     notifications_data = [
         {
             'message': notif.message,
@@ -287,8 +277,8 @@ def data_endpoint(request):
         for notif in notifications
     ]
 
-    # Prepare JSON response
-    response = JsonResponse({
+    # Return JSON Response
+    return JsonResponse({
         'status': 'success',
         'dashboard': {
             'bill': bill_data,
@@ -297,8 +287,3 @@ def data_endpoint(request):
             'notifications': notifications_data,
         }
     })
-
-    # Total endpoint execution time
-    print(f"TOTAL data_endpoint: {time.time() - start:.3f}s")
-
-    return response
