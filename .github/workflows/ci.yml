@@ -1,0 +1,29 @@
+name: django ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v6
+
+      - name: set up python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: install requirements
+        run: pip install -r requirements.txt
+
+      - name: check test
+        run: python manage.py test
+        env:
+          SECRET_KEY: dummy
