@@ -81,28 +81,39 @@ The system also empowers administrators with full control over menu updates, lea
 
 * Manage **student profiles**
 
+### 🔐 Authentication & Access Control
 
-## 🧰 Technology Stack 
-* **Backend**
+- Secure user authentication with Django
+- Role-Based Access Control (RBAC)
+- Student and Admin roles
+- Protected routes for role-specific access
 
-   * [Python](https://www.python.org/)
 
-   * [Django](https://www.djangoproject.com/) (Web Framework)
+## 🧰 Technology Stack
 
-   * [SQLite](https://www.sqlite.org/index.html) (Development Database)
-     
-* **Frontend**
+### Backend
+- **Python**
+- **Django**
+- **Django Authentication & Middleware**
+- **SQLite** (Development Database)
 
-   * [Tailwind CSS](https://tailwindcss.com/) (Styling)
 
-   * [Lucide Icons](https://lucide.dev/)
+### Frontend
+- **HTML5**
+- **CSS3**
+- **JavaScript (ES6)**
+- **Tailwind CSS**
+- **Lucide Icons**
 
-   * [JavaScript (ES6)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
+### APIs & Integrations
+- **Internal JSON API**
+- **Twilio WhatsApp API**
 
-   * [HTML5](https://developer.mozilla.org/en-US/docs/Web/HTML)  
-   
-   * [CSS3](https://developer.mozilla.org/en-US/docs/Web/CSS)
-
+### Deployment & Production
+- **Render**
+- **Gunicorn**
+- **WhiteNoise**
+- **Environment Variables**
 
 ## 🖼️ Screenshots
 
@@ -192,7 +203,7 @@ The system also empowers administrators with full control over menu updates, lea
     python manage.py runserver
     ```
 
-8. **You're all set!** Open your browser and go to `http://localhost:3000/`.
+8. **You're all set!** Open your browser and go to `http://127.0.0.1:8000/`.
 
 
 
