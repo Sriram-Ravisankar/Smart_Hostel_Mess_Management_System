@@ -3,6 +3,7 @@ venv/
 ENV/
 env/
 .venv/
+data.json
 
 # Ignore Python cache and build files
 __pycache__/
