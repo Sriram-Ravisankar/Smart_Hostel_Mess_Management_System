@@ -24,3 +24,5 @@ __pycache__/
 
 # Ignore Django collected static files
 staticfiles/
+
+release.zipdb.sqlite3
