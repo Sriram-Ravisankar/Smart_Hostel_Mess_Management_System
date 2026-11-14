@@ -7,7 +7,9 @@ from django.contrib import messages
 from django.http import JsonResponse 
 from django.views.decorators.cache import never_cache 
 from datetime import date, datetime
+from django.http import HttpResponse
 import calendar
+
 
 
 
@@ -287,3 +289,6 @@ def data_endpoint(request):
             'notifications': notifications_data,
         }
     })
+
+def health(request):
+    return HttpResponse("ok")

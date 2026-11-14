@@ -12,4 +12,5 @@ urlpatterns = [
     path('', views.student_dashboard, name='home'), 
     
     path('data-endpoint/', views.data_endpoint, name='data_endpoint'), 
+    path('health/', views.health, name='health'),
 ]
