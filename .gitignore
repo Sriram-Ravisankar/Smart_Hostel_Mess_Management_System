@@ -26,3 +26,4 @@ __pycache__/
 staticfiles/
 
 release.zipdb.sqlite3
+release.zip
