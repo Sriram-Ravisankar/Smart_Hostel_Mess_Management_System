@@ -1,5 +1,4 @@
-
-name: Django CI
+name: Django CI/CD
 
 on:
   push:
@@ -52,3 +51,33 @@ jobs:
 
       - name: Run tests
         run: python manage.py test
+
+  deploy:
+    needs: test
+    if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Build release zip from committed code
+        run: git archive --format=zip --output=release.zip HEAD
+
+      - name: Upload versioned and latest artifact
+        run: |
+          aws s3 cp release.zip s3://${{ vars.S3_BUCKET }}/releases/mess-app-${{ github.sha }}.zip
+          aws s3 cp release.zip s3://${{ vars.S3_BUCKET }}/release.zip
+
+      - name: Start rolling instance refresh
+        run: |
+          aws autoscaling start-instance-refresh \
+            --auto-scaling-group-name ${{ vars.ASG_NAME }} \
+            --preferences '{"MinHealthyPercentage":50,"InstanceWarmup":300}'
