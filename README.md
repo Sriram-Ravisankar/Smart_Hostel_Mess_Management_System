@@ -1,341 +1,67 @@
-## 🍽️ MessNet: Web-Based Mess Management System for Hostel Administration
+# AWS Two-Tier Web Architecture
 
-🌐 **Live Demo:** [https://messnet.onrender.com/](https://messnet.onrender.com/)
+A Django application deployed on AWS as a production-style two-tier setup: a load balancer in front of auto-scaled app servers, backed by a private database. The app was previously hosted on Render. This project moves it to self-managed infrastructure to learn how load balancing, scaling, networking, security, and automated deployments work together.
 
-MessNet is a web-based, all-in-one mess automation platform built using Django.
-It modernizes hostel mess workflows by allowing students to manage their menu, leave requests, bills, feedback, and lost & found through an elegant, user-friendly interface.
+**AWS services:** VPC, EC2 Auto Scaling, Application Load Balancer, RDS MySQL, S3, Systems Manager (Parameter Store and Session Manager), IAM
+**Tooling:** GitHub Actions (OIDC), Gunicorn, systemd
 
-The system also empowers administrators with full control over menu updates, leave approvals, billing, notifications, and more—all from a centralized backend.
+## Architecture
 
-## 🎨 Modern UI Experience
+![AWS Two-Tier Web Architecture](docs/architecture.png)
 
-- **MessNet** ships with a clean, responsive UI featuring:
+- **Application tier:** EC2 instances (Ubuntu + Gunicorn) in an Auto Scaling Group (min 2, max 4) across two AZs, behind an Application Load Balancer.
+- **Database tier:** RDS MySQL in a private subnet, with no public access. The DB subnet group spans two private subnets in different AZs.
+- **Traffic flow:** `Browser → ALB → EC2 instances → RDS`
+- **Security groups are chained:** the ALB accepts port 80 from the internet, the EC2 group accepts port 80 only from the ALB, and the RDS group accepts port 3306 only from the EC2 group.
 
-- **Sleek layout** built with Tailwind CSS
+## Key decisions
 
-- **Sidebar navigation** with animated Lucide icons
+| Decision | Why |
+|---|---|
+| RDS MySQL instead of a local database file | Several instances need to share one database |
+| 2 AZs, public and private subnets | The ALB and RDS need two AZs, and the database stays off the internet |
+| Chained security groups | Each tier trusts only the tier in front of it |
+| IAM instance role + Parameter Store | No passwords or AWS keys in code, in Git, or on disk |
+| Release zip in S3, pulled at boot | Every instance runs the same build, with no GitHub credentials on servers |
+| Session Manager, no SSH key | Port 22 is never open |
+| GitHub Actions with OIDC | Deploys without stored AWS keys, scoped to this repo and branch |
+| Single-AZ RDS | Free tier limit. The subnet group already spans two AZs, so Multi-AZ is a setting change |
 
-- **Dashboard** with live updates using real-time polling
+## Deployment flow
 
-- **Seamless module switching** (Menu, Leave, Bills, Feedback, Lost & Found)
+1. Push to `dev`.
+2. GitHub Actions runs automated checks against a MySQL container.
+3. If they pass, it builds a zip from the committed code and uploads it to S3 (a commit-named copy for rollback, plus `release.zip`).
+4. It starts an ASG instance refresh, which replaces instances gradually so the site stays up.
+5. Each new instance downloads the zip, fetches secrets from Parameter Store using its IAM role, and starts Gunicorn under systemd.
 
-- **Mobile-first responsive design**
+## Security
 
-- **Toast-like** feedback messages
+- RDS has no public access and sits in private subnets
+- Only the ALB can reach the app servers, and only the app servers can reach the database
+- Secrets live in Parameter Store (SecureString), loaded into a root-only env file
+- Instances require IMDSv2 and have no SSH key
+- The deploy role can only upload to one bucket and start an instance refresh
+- The release zip is built from committed code only (no `.env`, `venv`, or database file)
 
-- **Feedback** with 1–5 rating
+**Known gaps:** the site serves HTTP only (HTTPS via CloudFront or ACM is planned), app servers sit in public subnets, the app connects with the RDS master user, RDS is single-AZ, and database migrations are run by hand once.
 
+## Troubleshooting
 
-## ✨ Core Features
-**👨‍🎓 Student Features**
+| Symptom | Cause | Fix |
+|---|---|---|
+| Targets unhealthy, boot script stopped with S3 `403` | IAM policy resource was `arn:aws:s3:::bucket`, missing `/*` | Added `/*` so the policy covers objects |
+| Database login failed with `1045 Access denied` | Password in Parameter Store didn't match RDS | Set both to the same value |
+| GitHub Actions: `Not authorized to perform sts:AssumeRoleWithWebIdentity` | The token subject included numeric owner and repo IDs, so my trust policy didn't match | Printed the token's `sub` claim and used the exact value |
+| `2005 Unknown MySQL server host` after recreating RDS | Parameters are read only at instance boot | Updated `DB_HOST`, then ran an instance refresh |
+| Browser got `502` while `curl` got `200` | The health check skips the database, but requests with a session cookie query it. With RDS stopped, Gunicorn timed out and the ALB returned 502 | Diagnosed with ALB metrics and `journalctl`; added a DB connect timeout |
+| `1050 Table already exists` | An interrupted `migrate` left tables without migration records | Recreated the empty database and ran `migrate` once |
+| Site opened on desktop but not on a phone | The phone browser forced HTTPS, and the ALB only serves port 80. `curl` returned 200 | Confirmed with `curl`; HTTPS is the planned fix |
 
-* **Dashboard Overview**
-   
-   * Profile info (Name, Hostel ID, Department, Mobile)
-      
-   * Latest mess bill & payment status
-      
-   * Leave request status
-      
-   * Today’s food menu
-      
-   * Latest admin notifications
+## Cost and cleanup
 
-* **Weekly Food Menu**
+The ALB, RDS, and EC2 instances are the main costs. They are recreated for demos and deleted afterwards, while the VPC, security groups, target group, launch template, S3 bucket, parameters, and pipeline stay in place, so a rebuild takes about 15 minutes. Everything is tagged `Project=mess-app` so leftover resources are easy to find.
 
-* **Mess Leave Request**
+## Next steps
 
-   * Apply for leave
-      
-   * Auto bill adjustment based on approved days
-
-* **Mess Bill Tracking**
-
-   * Monthly bill list with paid/due status
-
-* **Feedback & Rating System**
-
-   * 1–5  rating + comment
-
-* **Lost & Found Portal**
-
-   * Submit item reports
-
-   * View admin-approved posts
-
-* **Real-Time Notification System**
-
-**🛠️ Admin Features**
-
-   * **Add/update** weekly Food Menu
-
-* **Approve/Reject** Leave Requests
-
-* **Auto-generate** bill adjustments
-
-* **Activate/Deactivate** Admin Notifications
-
-* **Approve** Lost & Found entries
-
-* View feedback **(read-only)**
-
-* Manage **student profiles**
-
-### 🔐 Authentication & Access Control
-
-- Secure user authentication with Django
-- Role-Based Access Control (RBAC)
-- Student and Admin roles
-- Protected routes for role-specific access
-
-
-## 🧰 Technology Stack
-
-### Backend
-- **Python**
-- **Django**
-- **Django Authentication & Middleware**
-- **SQLite** (Development Database)
-
-
-### Frontend
-- **HTML5**
-- **CSS3**
-- **JavaScript (ES6)**
-- **Tailwind CSS**
-- **Lucide Icons**
-
-### APIs & Integrations
-- **Internal JSON API**
-- **Twilio WhatsApp API**
-
-### Deployment & Production
-- **Render**
-- **Gunicorn**
-- **WhiteNoise**
-- **Environment Variables**
-
-## 🖼️ Screenshots
-
-
-📌 Dashboard
-
-![Dashboard](screenshots/Dashboard.png)
-
-📌 Food Menu
-
-![Menu](screenshots/Menu.png)
-
-📌 Leave Request
-
-![Leave](screenshots/Leave.png)
-
-📌 Bills
-
-![Bills](screenshots/Bills.png)
-
-📌 Feedback
-
-![Feedback](screenshots/Feedback.png)
-
-📌 Lost & Found
-
-![LostFound](screenshots/LostFound.png)
-
-
-## 🚀 Getting Started
-**Prerequisites**
-
-* [Python 3.10+](https://www.python.org/downloads/)
-* [Git](https://git-scm.com/downloads/)
-
-**🔧 Installation (Django Backend)**
-1. **Clone the Repository:**
-      ```
-      git clone https://github.com/Sriram-Ravisankar/Smart_Hostel_Mess_Management_System
-      cd Smart_Hostel_Mess_Management_System
-      ```
-      
-
-2.  **Create and activate a virtual environment:**
-    ```
-    # For Windows
-    python -m venv venv
-    .\venv\Scripts\activate
-    
-    # For macOS/Linux
-    python3 -m venv venv
-    source venv/bin/activate
-    ```
-
-3. **Create a `requirements.txt` file:**
-    Create a file named `requirements.txt` in the root of your project and paste the following:
-    ```
-   Django>=4.2.11,<5.0
-   gunicorn
-   twilio
-   whitenoise
-   psycopg2-binary
-   python-decouple
-   python-dotenv
-   dj-database-url
-    ```
-
-4.  **Install the required packages:**
-    ```
-    pip install -r requirements.txt
-    ```
-
-5.  **Apply database migrations:**
-    ```
-    python manage.py makemigrations
-    python manage.py migrate
-    ```
-
-6.  **Create an admin superuser:**
-    ```
-    python manage.py createsuperuser
-    ```
-    (You'll be prompted to create a username and password.)
-
-7.  **Run the development server:**
-    ```
-    python manage.py runserver
-    ```
-
-8. **You're all set!** Open your browser and go to `http://127.0.0.1:8000/`.
-
-
-
-## 🧑‍🏫 How to Use
-
-Follow these steps to understand and use the MessNet system effectively.
-
-1️⃣ **Login to Your Account**
-
-After installation, open your browser and go to: http://127.0.0.1:8000/
-
-
-Enter your Hostel ID and password to sign in.
-
-2️⃣ **Explore Your Dashboard**
-
- * **Once logged in, you can see:**
-
-   * Your profile details
-   
-   * Latest mess bill and due dates
-   
-   * Leave request status
-   
-   * Today’s menu
-   
-   * Admin notifications
-
-* The left sidebar helps you navigate between modules.
-
-3️⃣**Check the Weekly Food Menu**
-
-* **Click Food Menu in the sidebar to view:**
-
-* Breakfast
-
-* Lunch
-
-* Dinner
-
-* Menu is shown for all 7 days in a clean weekly layout.
-
-4️⃣ **Submit a Leave Request**
-
-To apply for leave:
-
-Go to Leave Request
-
-* Fill your from/to date
-
-* Enter a valid reason
-
-* Submit the form
-
-Your request will be shown in My Leave History and admin will approve or reject it.
-
-5️⃣**View Your Mess Bills**
-
-* **Go to Bill Details to see:**
-
-* Monthly bills
-
-* Leave-adjustment reductions
-
-* Paid / Due status
-
-* Last payment date
-
-6️⃣ **Submit Mess Feedback**
-
-* Click Feedback and:
-
-* Select a rating (1 to 5 stars)
-
-* Enter comments
-
-* Submit feedback
-
-This helps improve mess service quality.
-
-7️⃣ **Use the Lost & Found Module**
-
-* **Under Lost & Found, you can:**
-
-* Report lost/found items
-
-* Add a description & date
-
-* See admin-approved items
-
-* Find your belongings easily
-
-8️⃣ **Logout Safely**
-
-Click Logout at the bottom of the sidebar to sign out securely.
-
-9️⃣ **Admin Usage (For Administrators)**
-
-**Admins can visit:**
-
-http://127.0.0.1:8000/admin/
-
-* **Here they can manage:**
-
-* Menu updates
-
-* Leave approvals
-
-* Bills & adjustments
-
-* Notifications
-
-* Lost & Found approvals
-
-* Student accounts
-
-  ---
-
-<div align="center">
-
-### 🔗 **Live Website**
-https://messnet.onrender.com/
-
----
-
-### 👨‍💻 **Developed By**
-**Sriram**
-
----
-
-### 🌐 Connect With Me
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Profile-blue?style=for-the-badge&logo=linkedin)](https://www.linkedin.com/in/sriram55/)
-
- 
-</div>
+HTTPS with CloudFront or ACM, CloudWatch alarms and a dashboard, a limited database user for the app, app servers in private subnets with NAT, Multi-AZ RDS, and rebuilding the infrastructure with Terraform.
