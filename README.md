@@ -46,6 +46,19 @@ A Django application deployed on AWS as a production-style two-tier setup: a loa
 
 **Known gaps:** the site serves HTTP only (HTTPS via CloudFront or ACM is planned), app servers sit in public subnets, the app connects with the RDS master user, RDS is single-AZ, and database migrations are run by hand once.
 
+## Load testing and scaling
+
+| Test | Method | Result |
+|---|---|---|
+| Burst | Apache Bench, 2,000 requests, 10 concurrent, `/login/` | 0 failures, 1,354 req/s, p95 11 ms, p99 14 ms |
+| Server-side latency | CloudWatch `TargetResponseTime` during the burst | Average 6.1 ms, p95 10.1 ms, p99 13.2 ms |
+| Database-backed page | Sequential requests to `/student-dashboard/` | p95 76 ms, p99 104 ms |
+| Auto scaling | `stress-ng` CPU load on the instances | Target-tracking alarm fired, desired capacity went from 2 to 4 |
+
+Alarms (notifying through SNS): healthy hosts below 2, p95 response time above 1 s, and average CPU above 70%.
+
+Notes: the scale-out was triggered by synthetic CPU load. `/login/` does not query the database, so the dashboard figures are more representative of real pages.
+
 ## Troubleshooting
 
 | Symptom | Cause | Fix |
