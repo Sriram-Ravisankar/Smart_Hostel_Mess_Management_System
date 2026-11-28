@@ -1,5 +1,10 @@
 # AWS Two-Tier Web Architecture
 
+## Branches
+
+- [`main`](https://github.com/Sriram-Ravisankar/Smart_Hostel_Mess_Management_System/tree/main): Render deployment (live demo)
+- [`dev`](https://github.com/Sriram-Ravisankar/Smart_Hostel_Mess_Management_System/tree/dev): AWS deployment (ALB, Auto Scaling, RDS, GitHub Actions CI/CD)
+
 A Django application deployed on AWS as a production-style two-tier setup: a load balancer in front of auto-scaled app servers, backed by a private database. The app was previously hosted on Render. This project moves it to self-managed infrastructure to learn how load balancing, scaling, networking, security, and automated deployments work together.
 
 **AWS services:** VPC, EC2 Auto Scaling, Application Load Balancer, RDS MySQL, S3, Systems Manager (Parameter Store and Session Manager), IAM
