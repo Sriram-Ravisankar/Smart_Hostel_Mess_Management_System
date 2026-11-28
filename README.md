@@ -2,6 +2,11 @@
 
 🌐 **Live Demo:** [https://messnet.onrender.com/](https://messnet.onrender.com/)
 
+## Branches
+
+- [`main`](https://github.com/Sriram-Ravisankar/Smart_Hostel_Mess_Management_System/tree/main): Render deployment (live demo)
+- [`dev`](https://github.com/Sriram-Ravisankar/Smart_Hostel_Mess_Management_System/tree/dev): AWS deployment (ALB, Auto Scaling, RDS, GitHub Actions CI/CD)
+
 MessNet is a web-based, all-in-one mess automation platform built using Django.
 It modernizes hostel mess workflows by allowing students to manage their menu, leave requests, bills, feedback, and lost & found through an elegant, user-friendly interface.
 
